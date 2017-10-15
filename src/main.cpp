@@ -91,6 +91,8 @@ int main() {
           double py = j[1]["y"];
           double psi = j[1]["psi"];
           double v = j[1]["speed"];
+          double steer_value = j[1]["steering_angle"];
+          double throttle_value = j[1]["throttle"];
 
           /*
           * TODO: Calculate steering angle and throttle using MPC.
@@ -98,6 +100,14 @@ int main() {
           * Both are in between [-1, 1].
           *
           */
+
+          // predict where car will be after latency
+          const double latency = 0.1; 
+          const double delta = deg2rad(steer_value*25.);
+          // assume constant velocity since acceleration is not straightforward
+          psi = psi - v*delta/Lf*latency;
+          px = px + v*cos(psi)*latency;
+          py = py + v*sin(psi)*latency;
 
           // Translate waypoints to car position for path fitting
           for (int i=0; i<ptsx.size(); i++) {
@@ -116,8 +126,6 @@ int main() {
           double cte = polyeval(coeffs, 0);
           double epsi = -atan(coeffs[1]);
 
-          double steer_value = j[1]["steering_angle"];
-          double throttle_value = j[1]["throttle"];
 
           Eigen::VectorXd state(6);
           state << 0., 0., 0., v, cte, epsi;
@@ -127,6 +135,9 @@ int main() {
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
+          steer_value = vars[0] / (deg2rad(25)*Lf);
+          throttle_value = vars[1];
+
           msgJson["steering_angle"] = steer_value;
           msgJson["throttle"] = throttle_value;
 
@@ -137,8 +148,9 @@ int main() {
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
           // the points in the simulator are connected by a Green line
 
-          const int Nreturn = 8;
-          for (int i=Nreturn; i < vars.size(); i+=Nreturn) {
+          // first 2 position in var are actuator outputs, then x,y values of predicted path
+          const int stride = 2;
+          for (int i=2; i < vars.size(); i+=stride) {
             mpc_x_vals.push_back(vars[i]);
             mpc_y_vals.push_back(vars[i+1]);
           }
@@ -157,7 +169,7 @@ int main() {
           int num_points = 25;
           for (int i=1; i < num_points; i++) {
             next_x_vals.push_back(poly_inc*i);
-            next_x_vals.push_back(polyeval(coeffs, poly_inc*i));
+            next_y_vals.push_back(polyeval(coeffs, poly_inc*i));
           }
 
 
