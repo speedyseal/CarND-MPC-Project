@@ -22,7 +22,9 @@ Because the simulator flips the steering output delta0, the updates to psi have 
 
 The timestep length was chosen to be short to minimize computational latency but long enough so that it captures the curvature of the path, which is needed to solve for the steering angle.
 
-The step size was kept small at 50 ms so that the vehicle does not deviate far from the path between each optimized point. 50 ms at 40 mph is 2.9 feet. This constrains the prediction errors propagated from errors in the initial state.
+The step size was set to 100ms, which corresponds to (40 mph) 6 feet. This constrains the prediction errors propagated from errors in the initial state.
+
+If step size is too small, the computer may not be able to process the optimization in time to optimize for the needed horizon to look far enough head to control the car. If the optimization does not converge, wild output may occur. 100ms was used with N=20 steps so the car can look 2s ahead to control the car.
 
 ## Polynomial fitting and MPC preprocessing
 The waypoints and vehicle state are preprocessed to be relative to the vehicles current position. They are transformed - translated and rotated to be centered on the vehicles position and heading. This allows the waypoints to be fit to a simple polynomial passing through (0,0), and allows the CTE to be computed more simply. The MPC optimization can then be done relative to this reference point.

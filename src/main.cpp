@@ -77,7 +77,7 @@ int main() {
     // The 4 signifies a websocket message
     // The 2 signifies a websocket event
     string sdata = string(data).substr(0, length);
-    cout << sdata << endl;
+    // cout << sdata << endl;
     if (sdata.size() > 2 && sdata[0] == '4' && sdata[1] == '2') {
       string s = hasData(sdata);
       if (s != "") {
@@ -103,11 +103,13 @@ int main() {
 
           // predict where car will be after latency
           const double latency = 0.1; 
-          const double delta = deg2rad(steer_value*25.);
-          // assume constant velocity since acceleration is not straightforward
-          psi = psi - v*delta/Lf*latency;
-          px = px + v*cos(psi)*latency;
-          py = py + v*sin(psi)*latency;
+          
+          if( v > 0.1) {
+            v = v + throttle_value*latency;
+            px = px + v*cos(psi)*latency;
+            py = py + v*sin(psi)*latency;
+            psi = psi - v*steer_value/Lf*latency;
+          }
 
           // Translate waypoints to car position for path fitting
           for (int i=0; i<ptsx.size(); i++) {
@@ -135,7 +137,8 @@ int main() {
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.
           // Otherwise the values will be in between [-deg2rad(25), deg2rad(25] instead of [-1, 1].
-          steer_value = vars[0] / (deg2rad(25)*Lf);
+          // steer_value = vars[0] / (deg2rad(25)*Lf);
+          steer_value = vars[0] / (deg2rad(25)*Lf);  
           throttle_value = vars[1];
 
           msgJson["steering_angle"] = steer_value;
@@ -178,7 +181,7 @@ int main() {
 
 
           auto msg = "42[\"steer\"," + msgJson.dump() + "]";
-          std::cout << msg << std::endl;
+          // std::cout << msg << std::endl;
           // Latency
           // The purpose is to mimic real driving conditions where
           // the car does actuate the commands instantly.
