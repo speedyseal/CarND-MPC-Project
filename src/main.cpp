@@ -105,10 +105,10 @@ int main() {
           const double latency = 0.1; 
           
           if( v > 0.1) {
-            v = v + throttle_value*latency;
             px = px + v*cos(psi)*latency;
             py = py + v*sin(psi)*latency;
             psi = psi - v*steer_value/Lf*latency;
+            v = v + throttle_value*latency;
           }
 
           // Translate waypoints to car position for path fitting
